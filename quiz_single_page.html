@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>اختبار CSS</title>
+  <style>
+    body {
+      font-family: Tahoma, Arial, sans-serif;
+      background: #f7f9fc;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      text-align: center;
+    }
+    .question {
+      background: #fff;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .options label {
+      display: block;
+      margin: 8px 0;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .options input {
+      margin-left: 10px;
+    }
+    .options label:hover {
+      background: #eef;
+    }
+    .correct { color: green; font-weight: bold; }
+    .wrong { color: red; font-weight: bold; }
+    .score {
+      text-align: center;
+      margin: 20px;
+      font-size: 18px;
+    }
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      border: none;
+      background: #007BFF;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>اختبار CSS</h1>
+    <div id="quiz"></div>
+    <div class="score" id="score"></div>
+    <button onclick="restartQuiz()">إعادة الاختبار</button>
+  </div>
+
+  <script>
+    const questions = [
+      // أسئلة سهلة
+      { topic:"المقدمة", difficulty:"سهل", question:"ما معنى CSS؟", options:["Cascading Style Sheets","Computer Styled Sections","Creative Style System"], answer:0 },
+      { topic:"الألوان", difficulty:"سهل", question:"ما الكود الصحيح لجعل لون النص أحمر؟", options:["color: red;","text-color: red;","font-color: red;"], answer:0 },
+      { topic:"الخلفيات", difficulty:"سهل", question:"ما الخاصية المسؤولة عن تعيين صورة كخلفية؟", options:["background-image","image-bg","bg-src"], answer:0 },
+
+      // أسئلة متوسطة
+      { topic:"المحددات", difficulty:"متوسط", question:"أي المحددات يستهدف جميع العناصر من نوع <p>?", options:["p {}","#p {}",".p {}"], answer:0 },
+      { topic:"المحددات", difficulty:"متوسط", question:"أي من التالي يحدد العنصر ذو المعرف unique؟", options:["#unique",".unique","unique"], answer:0 },
+      { topic:"الوحدات", difficulty:"متوسط", question:"الوحدة em تُحسب عادة بناءً على؟", options:["حجم خط العنصر الأب","دقة الشاشة","عدد الأحرف"], answer:0 },
+
+      // أسئلة صعبة
+      { topic:"التحويلات", difficulty:"صعب", question:"ما الصيغة الصحيحة لتدوير عنصر 45 درجة؟", options:["transform: rotate(45deg);","rotate: 45;","transform: 45deg;"], answer:0 },
+      { topic:"الرسوم المتحركة", difficulty:"صعب", question:"أي خاصية تحدد سرعة حركة التحريك؟", options:["animation-duration","animation-speed","animation-time"], answer:0 },
+      { topic:"المتغيرات", difficulty:"صعب", question:"كيف يتم تعريف متغير CSS؟", options:["--main-color: blue;","var-main: blue;","$main-color: blue;"], answer:0 },
+    ];
+
+    let score = 0;
+
+    function loadQuiz() {
+      const quizDiv = document.getElementById('quiz');
+      quizDiv.innerHTML = '';
+      questions.forEach((q, index) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = 'question';
+        qDiv.innerHTML = `<h3>(${q.topic} - ${q.difficulty})</h3><p>${q.question}</p>`;
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options';
+        q.options.forEach((opt, i) => {
+          const label = document.createElement('label');
+          label.innerHTML = `<input type="radio" name="q${index}" value="${i}"> ${opt}`;
+          label.onclick = () => checkAnswer(index, i, label);
+          optionsDiv.appendChild(label);
+        });
+        qDiv.appendChild(optionsDiv);
+        quizDiv.appendChild(qDiv);
+      });
+    }
+
+    function checkAnswer(qIndex, choice, label) {
+      const q = questions[qIndex];
+      const labels = label.parentNode.querySelectorAll('label');
+      labels.forEach(l => l.style.pointerEvents = 'none');
+      if(choice === q.answer) {
+        label.classList.add('correct');
+        score++;
+      } else {
+        label.classList.add('wrong');
+      }
+      document.getElementById('score').innerText = `النتيجة: ${score} من ${questions.length}`;
+    }
+
+    function restartQuiz() {
+      score = 0;
+      document.getElementById('score').innerText = '';
+      loadQuiz();
+    }
+
+    loadQuiz();
+  </script>
+</body>
+</html>

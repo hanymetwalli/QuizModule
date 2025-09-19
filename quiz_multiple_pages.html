@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>تطبيق اختبار لغة CSS</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box;font-family: Cairo, 'Segoe UI', Tahoma, Arial;}
+    body{margin:0;background:linear-gradient(180deg,#071024 0%, #071b2a 100%);color:#e6eef6;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .app{width:100%;max-width:980px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 30px rgba(2,6,23,0.8);overflow:hidden}
+    header{padding:28px 32px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg, rgba(6,182,212,0.06), rgba(99,102,241,0.03));border-bottom:1px solid rgba(255,255,255,0.03)}
+    header h1{margin:0;font-size:20px;letter-spacing:0.6px}
+    header .meta{font-size:13px;color:var(--muted)}
+    main{display:flex;gap:24px;padding:28px}
+    .panel{flex:1}
+    .card{background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+    .start-screen{display:flex;flex-direction:column;gap:12px}
+    label{font-size:14px;color:var(--muted)}
+    input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    select{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .btn{display:inline-block;padding:10px 16px;border-radius:10px;border:none;background:var(--accent);color:#04202a;cursor:pointer;font-weight:700}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted)}
+    .question{font-size:18px;margin-bottom:8px}
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choice{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:var(--glass);cursor:pointer}
+    .choice.selected{outline:2px solid rgba(6,182,212,0.15);box-shadow:0 6px 20px rgba(6,182,212,0.06)}
+    .footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+    .progress{height:10px;background:rgba(255,255,255,0.04);border-radius:20px;overflow:hidden;flex:1;margin:0 12px}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#6366f1);width:0%}
+    .small{font-size:13px;color:var(--muted)}
+    .result{padding:18px;text-align:center}
+    .rating{font-size:20px;font-weight:800;margin:10px 0}
+    .controls{display:flex;gap:8px;justify-content:center}
+    .topline{display:flex;gap:12px;align-items:center}
+    .tag{font-size:12px;color:var(--muted);padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.03)}
+    footer{padding:14px 28px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));display:flex;justify-content:space-between;align-items:center}
+    @media(max-width:800px){main{flex-direction:column}header{flex-direction:column;gap:8px;align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <header>
+      <div>
+        <h1>اختبار CSS — تفاعلي</h1>
+        <div class="meta">أسئلة متنوعة، عشوائية، ولا يتم حفظ أي بيانات</div>
+      </div>
+      <div class="topline">
+        <div class="tag">عدد الأسئلة: <span id="totalLabel">20</span></div>
+        <div class="tag">اسم الطالب: <span id="studentNameLabel">—</span></div>
+      </div>
+    </header>
+    <main>
+      <section class="panel">
+        <div class="card" id="leftCard">
+          <div id="startScreen" class="start-screen">
+            <label>أدخل الاسم</label>
+            <input id="studentName" type="text" placeholder="مثال: أحمد محمد" autocomplete="off">
+            <label>اختر عدد أسئلة الاختبار</label>
+            <select id="numQuestions">
+              <option value="10">10 أسئلة</option>
+              <option value="20" selected>20 سؤالاً</option>
+              <option value="50">50 سؤالاً</option>
+              <option value="100">جميع الأسئلة (100)</option>
+            </select>
+            <label>مستوى الصعوبة (اختياري)</label>
+            <select id="difficultyFilter">
+              <option value="any">متنوع</option>
+              <option value="easy">سهل</option>
+              <option value="medium">متوسط</option>
+              <option value="hard">صعب</option>
+            </select>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" id="startBtn">ابدأ الاختبار</button>
+              <button class="btn ghost" id="sampleBtn">عرض سؤال تجريبي</button>
+            </div>
+            <p class="small">كل مرة سيظهر لك مجموعة أسئلة عشوائية. لا تخزن البيانات على الجهاز.</p>
+          </div>
+
+          <div id="quizScreen" style="display:none">
+            <div class="question" id="questionText"></div>
+            <div class="small" id="questionMeta"></div>
+            <div class="choices" id="choices"></div>
+            <div class="footer">
+              <div class="small">نقطة هذه السؤال: <strong id="qPoints">1</strong></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button class="btn ghost" id="prevBtn">السابق</button>
+                <div class="progress"><i id="progressFill"></i></div>
+                <div class="small"><span id="currentIdx">0</span>/<span id="totalQ">0</span></div>
+                <button class="btn" id="nextBtn">التالي</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="resultScreen" style="display:none">
+            <div class="result">
+              <h2 id="resultTitle">النتيجة</h2>
+              <div class="rating" id="scorePercent">0%</div>
+              <div class="small" id="scoreBreakdown"></div>
+              <div style="margin-top:12px" id="feedbackText"></div>
+              <div class="controls" style="margin-top:18px">
+                <button class="btn" id="retryBtn">إعادة الاختبار</button>
+                <button class="btn ghost" id="newBtn">اختبار جديد باسم آخر</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+      <aside class="panel" style="width:320px">
+        <div class="card">
+          <h3>معلومات سريعة</h3>
+          <p class="small">هذا التطبيق يعطي اختبارات على أساس أسئلة CSS متنوعة: قواعد اختيار العناصر، الـBox model، Flexbox، Grid، وحدات القياس، Media Queries، الأنيميشن، والوراثة.</p>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+          <div><strong>تعليمات:</strong></div>
+          <ul class="small" style="padding-left:14px">
+            <li>أدخل اسمك وابدأ — لا حاجة لحفظ.</li>
+            <li>كل مرة تظهر أسئلة عشوائية.</li>
+            <li>يمكنك اختيار عدد الأسئلة وصعوبة الاختبار.</li>
+            <li>التقييم يعتمد على مجموع النقاط.</li>
+          </ul>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+          <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+            <div>
+              <div class="small">حالة الاختبار</div>
+              <div id="stateTag" class="tag">جاهز</div>
+            </div>
+            <div style="text-align:center">
+              <div class="small">النتيجة الحالية</div>
+              <div id="liveScore" style="font-weight:800">0</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+    <footer>
+      <div class="small">مصمّم بواسطة تطبيق تعليمي • لا يتم حفظ البيانات محلياً</div>
+      <div class="small">يمكنك إعادة الاختبار مباشرة بعد الانتهاء</div>
+    </footer>
+  </div>
+
+<script>
+// ========== بيانات الأسئلة (100 سؤال) ==========
+const QUESTIONS = [
+  {id:1, q:"ما هي الخاصية التي تستخدم لتغيير لون النص في CSS؟", type:'mcq', choices:['background-color','font-color','color','text-style'], answer:2, points:1, topic:'أساسيات', difficulty:'easy'},
+  {id:2, q:"ما الخاصية المستخدمة لتعيين هامش حول العنصر من الخارج؟", type:'mcq', choices:['padding','margin','border','gap'], answer:1, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:3, q:"أي قيمة لمقدار العرض تقوم بجعل العنصر بعرض كامل العنصر الحاوي؟", type:'mcq', choices:['100%','100px','auto','fit-content'], answer:0, points:1, topic:'Layout', difficulty:'easy'},
+  {id:4, q:"خاصية 'display: none' تؤثر في:", type:'mcq', choices:['إخفاء العنصر وإزالة المساحة التي يحتلها','إخفاء العنصر ولكن يبقى المساحة','تعطيل العنصر فقط في الشاشات الصغيرة','تغيير لون العنصر'], answer:0, points:1, topic:'Layout', difficulty:'easy'},
+  {id:5, q:"ما هو ترتيب أسبقيات القواعد (specificity) الأقل إلى الأعلى؟", type:'mcq', choices:['inline > id > class > element','element > class > id > inline','class > element > id > inline','id > inline > class > element'], answer:0, points:2, topic:'Specificity', difficulty:'medium'},
+  {id:6, q:"الخاصية التي تُستخدم لتغيير خط العنصر هي:", type:'mcq', choices:['font-size','font-family','text-transform','font-weight'], answer:1, points:1, topic:'Typography', difficulty:'easy'},
+  {id:7, q:"ما الخاصية التي تستخدم لجعل صورة خلفية تكرر نفسها؟", type:'mcq', choices:['background-repeat','background-size','background-position','background-clip'], answer:0, points:1, topic:'Backgrounds', difficulty:'easy'},
+  {id:8, q:"وحدة 'rem' تقيس بالنسبة إلى:", type:'mcq', choices:['حجم خط العنصر نفسه','حجم خط العنصر الأب','حجم خط العنصر الجذر (html)','حجم نافذة المتصفح'], answer:2, points:2, topic:'Units', difficulty:'medium'},
+  {id:9, q:"خاصية CSS التي تتحكم في ترتيب عناصر Flexbox هي:", type:'mcq', choices:['justify-content','align-items','flex-direction','order'], answer:3, points:2, topic:'Flexbox', difficulty:'medium'},
+  {id:10, q:"متي يتم استخدام @media في CSS؟", type:'mcq', choices:['لتطبيق قواعد على أنواع محددة من الأجهزة أو أحجام الشاشات','لإنشاء رسوم متحركة','لتحديد الخطوط','لإضافة تعليقات'], answer:0, points:2, topic:'Responsive', difficulty:'medium'},
+  {id:11, q:"ما الخاصية التي تجعل حدود العنصر مستديرة؟", type:'mcq', choices:['border-radius','border-style','box-shadow','outline-radius'], answer:0, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:12, q:"أي من التالي يمثل محدد (selector) صحيح لاختيار عنصر بالمعرف id='main'?", type:'mcq', choices:['.main','#main','main','*main'], answer:1, points:1, topic:'Selectors', difficulty:'easy'},
+  {id:13, q:"true or false: الخاصية 'inherit' تجعل العنصر يرث القيمة من العنصر الأب.", type:'tf', answer:true, points:1, topic:'Inheritance', difficulty:'easy'},
+  {id:14, q:"أي من القواعد التالية تملك أسبقية أعلى؟" , type:'mcq', choices:['.btn:hover','.btn','#btn','.btn.primary'], answer:1, points:2, topic:'Specificity', difficulty:'medium'},
+  {id:15, q:"ما الخاصية المستخدمة للتحكم في شفافية العنصر؟", type:'mcq', choices:['opacity','transparency','visibility','filter'], answer:0, points:1, topic:'Visuals', difficulty:'easy'},
+  {id:16, q:"ما قيمة display المناسبة لإنشاء تخطيط شبكة (grid)?", type:'mcq', choices:['display:flex','display:block','display:grid','display:inline-grid'], answer:2, points:2, topic:'Grid', difficulty:'medium'},
+  {id:17, q:"يستخدم property 'z-index' من أجل:", type:'mcq', choices:['تغيير الحجم','تحديد الترتيب العمودي للعناصر فوق بعضها','تحديد المسافة بين العناصر','ضبط الزوايا'], answer:1, points:2, topic:'Positioning', difficulty:'medium'},
+  {id:18, q:"ما الخاصية التي تستخدم لعمل ظل للعناصر؟", type:'mcq', choices:['text-shadow','box-shadow','shadow-effect','drop-shadow'], answer:1, points:1, topic:'Visuals', difficulty:'easy'},
+  {id:19, q:"عند استخدام 'position: absolute'، ما العنصر المرجعي لوضع العنصر؟", type:'mcq', choices:['أقرب عنصر له position != static','جذر الصفحة دائمًا','العنصر الأب دائمًا','أقرب عنصر display:flex'], answer:0, points:2, topic:'Positioning', difficulty:'medium'},
+  {id:20, q:"ما الفرق بين margin و padding؟ (اختيار واحد صحيح)", type:'mcq', choices:['margin داخلي، padding خارجي','margin خارجي، padding داخلي','كلاهما نفس الشيء','margin يؤثر على الخط فقط'], answer:1, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:21, q:"خاصية CSS التي تستخدم لتغيير طول سطر النص هي: (line-height)", type:'text', answer:/^line-height$/i, points:1, topic:'Typography', difficulty:'easy'},
+  {id:22, q:"ما الخاصية التي تتحكم في تباعد الحروف؟", type:'mcq', choices:['letter-spacing','word-spacing','text-indent','text-align'], answer:0, points:1, topic:'Typography', difficulty:'easy'},
+  {id:23, q:"في Flexbox, الخاصية التي تتحكم بمحاذاة المحور العرضي هي:", type:'mcq', choices:['justify-content','align-items','flex-wrap','flex-basis'], answer:1, points:2, topic:'Flexbox', difficulty:'medium'},
+  {id:24, q:"ما الخاصية المستخدمة لجعل النص يتحول إلى أحرف كبيرة؟", type:'mcq', choices:['text-uppercase','text-transform','font-variant','font-style'], answer:1, points:1, topic:'Typography', difficulty:'easy'},
+  {id:25, q:"ما الخاصية التي تسمح بتغيير طول الخلفية لتملأ العنصر؟", type:'mcq', choices:['background-size','background-fill','background-stretch','background-extend'], answer:0, points:1, topic:'Backgrounds', difficulty:'easy'},
+  {id:26, q:"أي من التالي يستخدم لاختيار العناصر التي هي العنصر التالي مباشرة بعد عنصر معين (مثال: A + B)؟", type:'mcq', choices:['المحدّد العام (~)','محدد الطفل (>)','محدد الأخ المباشر (+)','المحدد المطابق للعنصر ( )'], answer:2, points:2, topic:'Selectors', difficulty:'medium'},
+  {id:27, q:"true or false: يمكن أن يمتلك العنصر أكثر من قيمة في خاصية background-image." , type:'tf', answer:true, points:1, topic:'Backgrounds', difficulty:'medium'},
+  {id:28, q:"ما الخاصية التي تستخدم لتحديد ترتيب توزيع المسافات بين عناصر الـflex عندما نستخدم justify-content?", type:'mcq', choices:['space-between','gap','margin','align-content'], answer:0, points:1, topic:'Flexbox', difficulty:'easy'},
+  {id:29, q:"ما وحدة القياس المناسبة لتصميم متجاوب تعتمد على عرض النافذة؟", type:'mcq', choices:['px','em','vw','cm'], answer:2, points:2, topic:'Units', difficulty:'medium'},
+  {id:30, q:"ما الخاصية التي تُستخدم لمنع التفاف النص داخل عنصر؟ (white-space)", type:'text', answer:/^white-space$/i, points:1, topic:'Typography', difficulty:'easy'},
+  {id:31, q:"في Grid، الخاصية التي تحدد عدد الأعمدة هي:", type:'mcq', choices:['grid-template-columns','grid-column','grid-auto-rows','grid-gap'], answer:0, points:2, topic:'Grid', difficulty:'medium'},
+  {id:32, q:"ما الخاصية التي تستخدم لتحريك عنصر مع مرور الوقت (transition)؟", type:'mcq', choices:['animation','transition','transform','motion'], answer:1, points:2, topic:'Animations', difficulty:'medium'},
+  {id:33, q:"true or false: الخاصية 'visibility: hidden' تجعل العنصر مخفيًا لكنه ما زال يحتفظ بمكانه في التخطيط.", type:'tf', answer:true, points:1, topic:'Layout', difficulty:'easy'},
+  {id:34, q:"ما الخاصية التي تستخدم لتغيير اتجاه النص (من اليسار لليمين أو العكس)؟", type:'mcq', choices:['direction','writing-mode','text-direction','unicode-bidi'], answer:0, points:1, topic:'Typography', difficulty:'easy'},
+  {id:35, q:"ما الخاصية التي تستخدم لتطبيق خطوط مخصصة من ملفات @font-face؟", type:'mcq', choices:['font-family','font-src','font-face','font-import'], answer:0, points:2, topic:'Fonts', difficulty:'medium'},
+  {id:36, q:"عند استخدام 'box-sizing: border-box'، ماذا يحدث؟", type:'mcq', choices:['الحجم يشمل الحواف والحدود والـpadding','الحجم يستبعد الحواف','الحجم يعتمد على النص فقط','لا فرق'], answer:0, points:2, topic:'Box Model', difficulty:'medium'},
+  {id:37, q:"ما الخاصية التي تسمح بتحديد صورة كقناع (mask)؟", type:'mcq', choices:['mask-image','clip-path','background-clip','filter'], answer:0, points:2, topic:'Advanced', difficulty:'hard'},
+  {id:38, q:"ما الخاصية المستخدمة لإنشاء تأثير التلاشي (fade) باستخدام تدرّج لوني؟", type:'mcq', choices:['opacity-gradient','linear-gradient + opacity','background-fade','filter:fade'], answer:1, points:2, topic:'Visuals', difficulty:'medium'},
+  {id:39, q:"أي محدد يختار كل عناصر li داخل ul ؟", type:'mcq', choices:['ul li','ul>li','li ul','ul+li'], answer:0, points:1, topic:'Selectors', difficulty:'easy'},
+  {id:40, q:"ما الخاصية التي تستخدم لضبط طول الحد (border-width)؟", type:'mcq', choices:['border-size','border-width','border-style','border-length'], answer:1, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:41, q:"ما الخاصية التي تستخدم لضبط شفافية خلفية العنصر باستخدام rgba؟ (مثال: rgba(0,0,0,0.5))", type:'mcq', choices:['opacity','background-color','background-opacity','filter-opacity'], answer:1, points:1, topic:'Backgrounds', difficulty:'easy'},
+  {id:42, q:"ما قيمة الخاصية display لإنشاء عنصر سطري (inline) لكنها تسمح بتحديد عرض وارتفاع؟", type:'mcq', choices:['inline','block','inline-block','flow-root'], answer:2, points:2, topic:'Layout', difficulty:'medium'},
+  {id:43, q:"في CSS، ما وظيفة الـ pseudo-class :hover؟", type:'mcq', choices:['يطبق عند اختيار العنصر','يطبق عندما يمر المؤشر فوق العنصر','يطبق على العناصر المخفية','يطبق على العنصر عند التحميل'], answer:1, points:1, topic:'Selectors', difficulty:'easy'},
+  {id:44, q:"ما الخاصية التي تسمح بتقسيم النص إلى أعمدة؟", type:'mcq', choices:['column-count','grid-template-columns','columns','text-columns'], answer:0, points:2, topic:'Layout', difficulty:'medium'},
+  {id:45, q:"true or false: يمكن استخدام calc() في CSS لإجراء حسابات على القيم.", type:'tf', answer:true, points:1, topic:'Functions', difficulty:'easy'},
+  {id:46, q:"ما الخاصية التي تسمح بتطبيق تأثير عندما يتغير حجم العنصر بمرور الوقت باستخدام keyframes؟", type:'mcq', choices:['transition','@keyframes / animation','transform','motion-timeline'], answer:1, points:2, topic:'Animations', difficulty:'medium'},
+  {id:47, q:"ما الخاصية المستخدمة لجعل الصورة الخلفية ثابتة عند التمرير؟", type:'mcq', choices:['background-attachment: fixed','background-position: fixed','background-repeat: fixed','background-scroll: none'], answer:0, points:1, topic:'Backgrounds', difficulty:'easy'},
+  {id:48, q:"ما الخاصية التي تتحكم في المسافة بين السطر السابق واللاحق؟ (line-height) — صحيح أو خطأ؟", type:'tf', answer:true, points:1, topic:'Typography', difficulty:'easy'},
+  {id:49, q:"ما الخاصية التي تتحكم بنمط حدود العنصر؟", type:'mcq', choices:['border-style','border-type','border-format','border-shape'], answer:0, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:50, q:"في CSS، ماذا يفعل 'overflow: auto'?", type:'mcq', choices:['يُخفي الزيادة','يُظهر شريط تمرير عند الحاجة','يجعل العنصر ثابتًا','يزيل الحواف'], answer:1, points:2, topic:'Layout', difficulty:'medium'},
+  {id:51, q:"ما الخاصية المستخدمة لتحديد اتجاه تدفق العناصر في flex container؟", type:'mcq', choices:['flex-direction','flex-flow','flex-wrap','flex-basis'], answer:0, points:1, topic:'Flexbox', difficulty:'easy'},
+  {id:52, q:"ما الخاصية التي تسمح بتلوين حدود العنصر؟", type:'mcq', choices:['border-color','color-border','outline-color','stroke-color'], answer:0, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:53, q:"text-align: justify يقوم بـ:", type:'mcq', choices:['محاذاة النص لليسار فقط','محاذاة النص لليمين فقط','توزيع النص ليملأ العرض بالكامل','تحديد تباعد الفقرات'], answer:2, points:1, topic:'Typography', difficulty:'easy'},
+  {id:54, q:"ما الخاصية التي تُستخدم لإخفاء شريط التمرير وجعل المحتوى غير مرئي خارج العنصر؟", type:'mcq', choices:['overflow: hidden','clip-path','visibility: hidden','display:none'], answer:0, points:1, topic:'Layout', difficulty:'easy'},
+  {id:55, q:"ما هي الكلمة المفتاحية التي تستخدم لجعل قيمة الخاصية لا ترث؟ (initial أو inherit)؟", type:'mcq', choices:['initial','inherit','unset','revert'], answer:0, points:2, topic:'Inheritance', difficulty:'medium'},
+  {id:56, q:"ما الخاصية التي تستخدم لعمل تحريك مطول باستخدام animation-duration؟ (اختر الخاصية المرتبطة)", type:'mcq', choices:['animation-iteration-count','animation-duration','animation-delay','animation-timing-function'], answer:1, points:1, topic:'Animations', difficulty:'easy'},
+  {id:57, q:"أي محدد يستخدم لاختيار كل العناصر ذات الصنف 'card' داخل عنصر له صنف 'container'؟", type:'mcq', choices:['.container .card','.container>.card','.card .container','#container .card'], answer:0, points:1, topic:'Selectors', difficulty:'easy'},
+  {id:58, q:"ما الخاصية التي تجعل النص يقطع بنقاط (ellipsis) عند تجاوزه للمساحة؟", type:'mcq', choices:['text-overflow: ellipsis','overflow-wrap','word-break','text-wrap'], answer:0, points:2, topic:'Typography', difficulty:'medium'},
+  {id:59, q:"ما الاختصار لكتابة الحواف الأربعة (border-width)؟", type:'mcq', choices:['border-width: top right bottom left','border: width top right bottom left','border-width: TRBL','border-width: top right bottom left (اختصار)'], answer:0, points:2, topic:'Box Model', difficulty:'medium'},
+  {id:60, q:"ما الخاصية التي تتحكم بسرعة الانحدار في transition (easing)؟", type:'mcq', choices:['transition-delay','transition-duration','transition-timing-function','transition-property'], answer:2, points:2, topic:'Animations', difficulty:'medium'},
+  {id:61, q:"true or false: المحدد '*' يختار كل العناصر في الصفحة.", type:'tf', answer:true, points:1, topic:'Selectors', difficulty:'easy'},
+  {id:62, q:"ما الخاصية المناسبة لعمل تدرج دائري (radial)؟", type:'mcq', choices:['linear-gradient','conic-gradient','radial-gradient','circular-gradient'], answer:2, points:2, topic:'Backgrounds', difficulty:'medium'},
+  {id:63, q:"أي من القيم التالية تُستخدم لجعل الخط غامقًا؟", type:'mcq', choices:['font-weight: 100','font-weight: 400','font-weight: 700','font-weight: normal'], answer:2, points:1, topic:'Typography', difficulty:'easy'},
+  {id:64, q:"ما الخاصية التي تسمح بتحديد ما إذا كان العنصر مرن (flexible) أم لا (flex-grow)؟", type:'mcq', choices:['flex','flex-basis','flex-grow','flex-shrink'], answer:2, points:2, topic:'Flexbox', difficulty:'medium'},
+  {id:65, q:"ما الخاصية المستخدمة لتحديد موضع الخلفية؟", type:'mcq', choices:['background-position','background-origin','background-attachment','background-clip'], answer:0, points:1, topic:'Backgrounds', difficulty:'easy'},
+  {id:66, q:"ما الخاصية التي تستخدم لجعل العنصر يظهر فوق العناصر الأخرى عندما يكون position محددًا؟ (z-index) — صحيح أم خطأ؟", type:'tf', answer:true, points:1, topic:'Positioning', difficulty:'easy'},
+  {id:67, q:"ما الفرق بين display: inline و display: block؟", type:'mcq', choices:['inline يبدأ سطرًا جديدًا وblock لا يبدأ','block يبدأ سطرًا جديدًا وinline لا يبدأ','كلاهما نفس الشيء','inline يأخذ العرض الكامل'], answer:1, points:1, topic:'Layout', difficulty:'easy'},
+  {id:68, q:"ما الخاصية التي تُستخدم لتدوير عنصر (transform)؟", type:'mcq', choices:['rotate','transform: rotate()','transform-origin','transform-style'], answer:1, points:2, topic:'Transforms', difficulty:'medium'},
+  {id:69, q:"true or false: يمكن استخدام المتغيرات في CSS باستخدام --var-name و var(--var-name).", type:'tf', answer:true, points:1, topic:'Variables', difficulty:'easy'},
+  {id:70, q:"ما الخاصية التي تستخدم لإخفاء العنصر عند الوصول لحجم شاشة محدد؟ (media query) — اختر الصحيح", type:'mcq', choices:['@media (max-width: 600px) { .el{ display:none } }','@media { .el{ display:none } }','@screen small { .el{ display:none } }','@responsive { .el{ display:none } }'], answer:0, points:2, topic:'Responsive', difficulty:'medium'},
+  {id:71, q:"ما الخاصية التي تستخدم لجعل النص يلتصق ببدء الحاوية (text-indent)؟", type:'mcq', choices:['text-indent','text-attach','text-clip','text-wrap'], answer:0, points:1, topic:'Typography', difficulty:'easy'},
+  {id:72, q:"ما الخاصية التي تُستخدم للدمج بين background-clip و text لعمل تأثير خلفي على النص؟", type:'mcq', choices:['background-clip: text','text-background','background-origin:text','clip-text'], answer:0, points:3, topic:'Advanced', difficulty:'hard'},
+  {id:73, q:"ما الخاصية التي تتحكم في الطريقة التي يكسر بها النص الكلمات (word-break)؟", type:'mcq', choices:['word-break','overflow-wrap','white-space','text-wrap'], answer:0, points:1, topic:'Typography', difficulty:'easy'},
+  {id:74, q:"ما الخاصية التي تسمح بتغيير المسافة العمودية بين الأعمدة في CSS Grid؟", type:'mcq', choices:['grid-row-gap','grid-column-gap','grid-gap','row-gap'], answer:3, points:2, topic:'Grid', difficulty:'medium'},
+  {id:75, q:"ما الخاصية التي تستخدم لجعل الخلفية تغطي العنصر بالكامل مع الحفاظ على نسبة الابعاد؟", type:'mcq', choices:['background-size: cover','background-size: contain','background-size: auto','background-size: 100%'], answer:0, points:2, topic:'Backgrounds', difficulty:'medium'},
+  {id:76, q:"true or false: :before و :after ليست عناصر حقيقية بل محتوى افتراضي مضاف عبر CSS.", type:'tf', answer:true, points:1, topic:'Pseudo-elements', difficulty:'easy'},
+  {id:77, q:"ما الخاصية التي تُستخدم لإعداد حدود داخلية للعناصر (outline)؟", type:'mcq', choices:['outline','border','box-shadow','inner-border'], answer:0, points:1, topic:'Visuals', difficulty:'easy'},
+  {id:78, q:"ما الخاصية التي تتحكم في ترتيب العناصر عندما تتجاوز المساحة المتاحة في flex container؟", type:'mcq', choices:['flex-wrap','flex-flow','flex-direction','flex-basis'], answer:0, points:2, topic:'Flexbox', difficulty:'medium'},
+  {id:79, q:"ما الخاصية التي تستخدم لتطبيق تأثير مخصص على النص باستخدام كلمات SVG أو صور؟ (text-shadow لا يكفي)", type:'mcq', choices:['mask-image','background-clip:text','filter','text-mask'], answer:1, points:3, topic:'Advanced', difficulty:'hard'},
+  {id:80, q:"ما الخاصية التي تستخدم لجعل قيمة معينة لا يتم تطبيقها إلا في متصفح يدعمها؟ (feature query)", type:'mcq', choices:['@supports','@media','@browser','@feature'], answer:0, points:3, topic:'Advanced', difficulty:'hard'},
+  {id:81, q:"أي من التالي يحدد الـfont-size بالنسبة لحجم الخط الجذر؟", type:'mcq', choices:['em','rem','px','%'], answer:1, points:2, topic:'Units', difficulty:'medium'},
+  {id:82, q:"ما الخاصية التي تتحكم في رؤية العنصر للمطابع (print)؟", type:'mcq', choices:['@media print','print-mode','@print','@media (type: print)'], answer:0, points:2, topic:'Responsive', difficulty:'medium'},
+  {id:83, q:"ما الخاصية التي تُستخدم لمنع العناصر من أن تتجاوز الحاوية في اتجاه معين باستخدام clamp()؟ (clamp تستخدم مع width أو font-size)، اكتب اسم الخاصية التي تستعمل مع clamp().", type:'text', answer:/^(width|font-size|height)$/i, points:3, topic:'Functions', difficulty:'hard'},
+  {id:84, q:"true or false: CSS Grid يسمح بوجود مناطق مسماة (named areas) باستخدام grid-template-areas.", type:'tf', answer:true, points:2, topic:'Grid', difficulty:'medium'},
+  {id:85, q:"ما الخاصية التي تُستخدم لتحديد مسافات داخلية في عنصر (padding) اختصارًا؟", type:'mcq', choices:['padding','padding-inline','padding-block','padding: 10px 5px'], answer:0, points:1, topic:'Box Model', difficulty:'easy'},
+  {id:86, q:"ما الخاصية التي تتحكم في سرعة تكرار الرسوم المتحركة (animation-iteration-count)؟", type:'mcq', choices:['animation-duration','animation-iteration-count','animation-delay','animation-fill-mode'], answer:1, points:1, topic:'Animations', difficulty:'easy'},
+  {id:87, q:"ما الخاصية التي تُستخدم لتحويل النص إلى سطر جديد عند الفراغات تلقائيًا؟ (word-wrap أو overflow-wrap)", type:'mcq', choices:['word-wrap','white-space','text-wrap','nowrap'], answer:0, points:1, topic:'Typography', difficulty:'easy'},
+  {id:88, q:"ما الخاصية التي تسمح بتحديد ما إذا كان العنصر يمكن أن يُستخدم كنقطة توقف للتركيز (outline:none) — هل من الأفضل إزالته؟ (اختبر الإجابة الصحيحة)", type:'mcq', choices:['نعم من الأفضل إزالته','لا، الاحتفاظ بمؤشر التركيز مهم للوصولية','يمكن إزالته دائمًا','فقط على الهواتف'], answer:1, points:2, topic:'Accessibility', difficulty:'medium'},
+  {id:89, q:"ما الخاصية التي تستخدم لإضافة مسافة داخلية فقط على المحور الأفقي (padding-inline)؟", type:'mcq', choices:['padding-left/right','padding-inline','padding-inline-start','padding-inline-end'], answer:1, points:2, topic:'Box Model', difficulty:'medium'},
+  {id:90, q:"true or false: order في flex يؤثر على ترتيب القراءة (accessibility) دائمًا بنفس ترتيب العرض.", type:'tf', answer:false, points:2, topic:'Accessibility', difficulty:'hard'},
+  {id:91, q:"ما الخاصية التي تُستخدم لتطبيق فلتر على صورة خلفية أو عنصر؟", type:'mcq', choices:['filter','backdrop-filter','image-filter','opacity-filter'], answer:0, points:2, topic:'Visuals', difficulty:'medium'},
+  {id:92, q:"ما الخاصية التي تسمح بتحديد نمط تدرّج متزامن (conic-gradient)؟", type:'mcq', choices:['linear-gradient','radial-gradient','conic-gradient','gradient-conic'], answer:2, points:2, topic:'Backgrounds', difficulty:'medium'},
+  {id:93, q:"أي من الخصائص التالية يُستخدم لتحديد سلوك الربط بين سطر وعرض في الشبكة (align-content)؟", type:'mcq', choices:['align-items','align-content','justify-items','justify-content'], answer:1, points:2, topic:'Grid', difficulty:'medium'},
+  {id:94, q:"ما الخاصية التي تستخدم لتحديد إذا كان العنصر مرئيًا فقط للشاشة لكن يُطبع أم لا؟ (print-related) — اختر الصحيح", type:'mcq', choices:['visibility: visible','display: none','@media print { .el{ display:block } }','@media print { .el{ display:none } }'], answer:3, points:2, topic:'Responsive', difficulty:'medium'},
+  {id:95, q:"ما الخاصية التي تسمح بتحديد مساحات داخلية منفصلة في الاتجاهات الكتابية (padding-block)؟", type:'mcq', choices:['padding','padding-inline','padding-block','padding-separate'], answer:2, points:2, topic:'Box Model', difficulty:'medium'},
+  {id:96, q:"ما الخاصية التي تستخدم لتعيين شفافية الخلفية فقط دون التأثير على الأبناء (background-color: rgba vs opacity)؟", type:'mcq', choices:['opacity','background-color with rgba','filter:alpha','transparent-bg'], answer:1, points:2, topic:'Visuals', difficulty:'medium'},
+  {id:97, q:"true or false: عند كتابة قواعد مخصصة في CSS يجب التأكد من ترتيبها بحيث لا تقوم قاعدة أعم بتجاوز قاعدة أخص.", type:'tf', answer:true, points:2, topic:'Best Practices', difficulty:'easy'},
+  {id:98, q:"ما الخاصية التي تمكنك من ضبط موضع العنصر بالنسبة لمكعب ثلاثي الأبعاد (transform-style)?", type:'mcq', choices:['transform-origin','transform-style','perspective','backface-visibility'], answer:1, points:3, topic:'Transforms', difficulty:'hard'},
+  {id:99, q:"ما الخاصية التي تسمح بإيقاف التحديد النصي على العنصر (user-select)؟", type:'mcq', choices:['select:none','user-select:none','no-select','disable-select'], answer:1, points:1, topic:'UX', difficulty:'easy'},
+  {id:100, q:"ما أفضل ممارسة لكتابة CSS منظمة وقابلة لإعادة الاستخدام؟ (اختيار واحد)", type:'mcq', choices:['استخدام أسماء عشوائية','كتابة CSS في ملف واحد فقط','استخدام منهجية منظمة مثل BEM أو CSS Modules','اعتماد inline styles لكل عنصر'], answer:2, points:3, topic:'Best Practices', difficulty:'medium'}
+];
+
+// ========== منطق التطبيق ==========
+let state = {
+  name:null,
+  pool:[],
+  currentIdx:0,
+  answers:{}, // id => {answer, correct}
+  totalPoints:0,
+  earnedPoints:0,
+  questions:[],
+};
+
+const el = id=>document.getElementById(id);
+const startBtn = el('startBtn');
+const sampleBtn = el('sampleBtn');
+const startScreen = el('startScreen');
+const quizScreen = el('quizScreen');
+const resultScreen = el('resultScreen');
+const questionText = el('questionText');
+const choicesEl = el('choices');
+const qPoints = el('qPoints');
+const currentIdx = el('currentIdx');
+const totalQ = el('totalQ');
+const progressFill = el('progressFill');
+const prevBtn = el('prevBtn');
+const nextBtn = el('nextBtn');
+const retryBtn = el('retryBtn');
+const newBtn = el('newBtn');
+const studentNameInput = el('studentName');
+const studentNameLabel = el('studentNameLabel');
+const totalLabel = el('totalLabel');
+const numQuestionsSelect = el('numQuestions');
+const difficultyFilter = el('difficultyFilter');
+const stateTag = el('stateTag');
+const liveScore = el('liveScore');
+const scorePercent = el('scorePercent');
+const scoreBreakdown = el('scoreBreakdown');
+const feedbackText = el('feedbackText');
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function prepareQuestions(){
+  const count = parseInt(numQuestionsSelect.value,10);
+  const diff = difficultyFilter.value;
+  let pool = QUESTIONS.slice();
+  if(diff!=='any'){pool = pool.filter(q=>q.difficulty===diff)}
+  pool = shuffle(pool);
+  const selected = pool.slice(0, Math.min(count, pool.length));
+  // shuffle choices for mcq types
+  selected.forEach(q=>{
+    if(q.type==='mcq'){
+      const choices = q.choices.map((c,i)=>({c,i}));
+      shuffle(choices);
+      const newIndex = choices.findIndex(x=>x.i===q.answer);
+      q._shuffledChoices = choices.map(x=>x.c);
+      q._shuffledAnswer = newIndex;
+    }
+  });
+  state.questions = selected;
+  state.totalPoints = selected.reduce((s,q)=>s+ (q.points||1),0);
+}
+
+function startTest(){
+  const name = studentNameInput.value.trim() || 'طالب غير مسجل';
+  state.name = name;
+  stateTag.textContent='قيد الاختبار';
+  studentNameLabel.textContent = name;
+  totalLabel.textContent = numQuestionsSelect.value;
+  state.answers = {};
+  state.currentIdx = 0;
+  state.earnedPoints = 0;
+  prepareQuestions();
+  startScreen.style.display='none';
+  resultScreen.style.display='none';
+  quizScreen.style.display='block';
+  el('totalQ').textContent = state.questions.length;
+  renderQuestion(0);
+}
+
+function renderQuestion(idx){
+  const q = state.questions[idx];
+  if(!q) return;
+  currentIdx.textContent = idx+1;
+  progressFill.style.width = Math.round(((idx)/state.questions.length)*100)+'%';
+  questionText.textContent = q.q;
+  qPoints.textContent = q.points||1;
+  el('questionMeta').textContent = `الموضوع: ${q.topic} — الصعوبة: ${q.difficulty}`;
+  choicesEl.innerHTML='';
+
+  if(q.type==='mcq'){
+    const choices = q._shuffledChoices || q.choices;
+    choices.forEach((ch,i)=>{
+      const d = document.createElement('div'); d.className='choice'; d.tabIndex=0; d.textContent = ch;
+      d.onclick=()=>selectChoice(q.id,i);
+      d.onkeydown=(e)=>{if(e.key==='Enter') selectChoice(q.id,i)};
+      if(state.answers[q.id] && state.answers[q.id].answer===i) d.classList.add('selected');
+      choicesEl.appendChild(d);
+    });
+  } else if(q.type==='tf'){
+    ['True','False'].forEach((t,i)=>{
+      const label = i===0? 'صحيح':'خطأ';
+      const d = document.createElement('div'); d.className='choice'; d.tabIndex=0; d.textContent = label;
+      d.onclick=()=>selectChoice(q.id, i===0);
+      if(state.answers[q.id] && state.answers[q.id].answer=== (i===0)) d.classList.add('selected');
+      choicesEl.appendChild(d);
+    });
+  } else if(q.type==='text'){
+    const input = document.createElement('input'); input.type='text'; input.style.width='100%'; input.placeholder='أدخل إجابتك هنا...'; input.value = state.answers[q.id]?.answer || '';
+    input.onchange=()=>{state.answers[q.id]={answer:input.value};};
+    choicesEl.appendChild(input);
+  }
+}
+
+function selectChoice(qid, chosen){
+  const q = state.questions.find(x=>x.id===qid);
+  if(!q) return;
+  // store
+  state.answers[qid] = state.answers[qid] || {};
+  state.answers[qid].answer = chosen;
+  // mark selected visually
+  const childs = Array.from(choicesEl.children);
+  childs.forEach((c,i)=>{c.classList.remove('selected')});
+  if(q.type==='mcq'){
+    childs[chosen] && childs[chosen].classList.add('selected');
+  } else if(q.type==='tf'){
+    const idx = chosen?1:0; childs[idx] && childs[idx].classList.add('selected');
+  }
+}
+
+nextBtn.onclick = ()=>{
+  saveCurrentAnswer();
+  if(state.currentIdx < state.questions.length-1){
+    state.currentIdx++;
+    renderQuestion(state.currentIdx);
+  } else {
+    finishTest();
+  }
+};
+prevBtn.onclick = ()=>{
+  saveCurrentAnswer();
+  if(state.currentIdx>0){state.currentIdx--; renderQuestion(state.currentIdx)}
+};
+
+function saveCurrentAnswer(){
+  const q = state.questions[state.currentIdx];
+  if(!q) return;
+  // if text input, read it
+  if(q.type==='text'){
+    const inp = choicesEl.querySelector('input');
+    if(inp){state.answers[q.id]={answer:inp.value};}
+  }
+}
+
+function finishTest(){
+  // evaluate
+  state.earnedPoints = 0;
+  state.questions.forEach(q=>{
+    const given = state.answers[q.id]?.answer;
+    let correct=false;
+    if(q.type==='mcq'){
+      correct = (given===q._shuffledAnswer);
+    } else if(q.type==='tf'){
+      correct = Boolean(given) === Boolean(q.answer);
+    } else if(q.type==='text'){
+      if(given==null) correct=false; else {
+        try{const re = (typeof q.answer === 'string')? new RegExp('^'+q.answer+'$','i') : q.answer; correct = re.test(given.trim());}catch(e){correct = String(given).trim().toLowerCase()===String(q.answer).toLowerCase()}
+      }
+    }
+    if(correct){ state.earnedPoints += (q.points||1); state.answers[q.id].correct=true } else { state.answers[q.id].correct=false }
+  });
+  // show result
+  showResults();
+}
+
+function showResults(){
+  quizScreen.style.display='none';
+  resultScreen.style.display='block';
+  stateTag.textContent='انتهى الاختبار';
+  el('scorePercent').textContent = Math.round((state.earnedPoints/state.totalPoints)*100) + '%';
+  el('resultTitle').textContent = `${state.name} — النتيجة`;
+  el('scoreBreakdown').textContent = `النقاط: ${state.earnedPoints} من ${state.totalPoints}`;
+  liveScore.textContent = state.earnedPoints;
+  // feedback
+  const pct = (state.earnedPoints/state.totalPoints)*100;
+  let fb='';
+  if(pct>=85) fb='ممتاز — مستوى قوي في CSS! حافظ على الممارسة واستكشف المواضيع المتقدمة.';
+  else if(pct>=65) fb='جيد — لديك فهم جيد لكن تحتاج لمراجعة بعض المفاهيم.';
+  else if(pct>=40) fb='متوسط — راجع الأساسيات (Box model, Selectors, Flex/Grid).';
+  else fb='يجب التحسين — ابدأ بمراجعة الأساسيات وممارسة أمثلة عملية.';
+  el('feedbackText').textContent = fb;
+
+  // progress bar full
+  progressFill.style.width = '100%';
+}
+
+retryBtn.onclick = ()=>{
+  // same name, reshuffle
+  stateTag.textContent='قيد الاختبار';
+  state.answers = {}; state.currentIdx=0; state.earnedPoints=0; prepareQuestions(); quizScreen.style.display='block'; resultScreen.style.display='none'; el('totalQ').textContent = state.questions.length; renderQuestion(0);
+};
+newBtn.onclick = ()=>{
+  // reset to start
+  state = {name:null,pool:[],currentIdx:0,answers:{},totalPoints:0,earnedPoints:0,questions:[]};
+  studentNameInput.value=''; studentNameLabel.textContent='—'; totalLabel.textContent=numQuestionsSelect.value;
+  startScreen.style.display='block'; quizScreen.style.display='none'; resultScreen.style.display='none'; stateTag.textContent='جاهز'; liveScore.textContent='0'; progressFill.style.width='0%';
+};
+
+sampleBtn.onclick = ()=>{
+  // show random one question quick
+  const q = QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+  alert(`سؤال تجريبي:\n${q.q}\n(نوع: ${q.type}, نقاط: ${q.points})`);
+}
+
+startBtn.onclick = startTest;
+
+// allow Enter to start
+studentNameInput.addEventListener('keydown', e=>{if(e.key==='Enter') startTest()});
+
+// initial labels
+el('totalQ').textContent = numQuestionsSelect.value;
+studentNameLabel.textContent='—';
+
+</script>
+</body>
+</html>
